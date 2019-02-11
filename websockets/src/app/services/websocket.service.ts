@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import * as Rx from 'rxjs';
 import { Observable, Observer } from "rxjs";
-import { fromEvent } from "rxjs";
 
 @Injectable({
   providedIn: 'root'
@@ -10,20 +9,46 @@ export class WebsocketService {
 
   constructor() { }
 
-  //Erzeugt ein RxJS Subject das gleichzeitig ein Observer und ein Observable ist.
-  //Der 2. Vorteil ist, dass damit mehrere Subscriptions möglich sind. zB von mehreren Komponenten gleichzeitig
+  /*
+    Observables/Observer/Subscriber werden für Aktionen verwendet, die Asynchron laufen sollen,
+    weil zB die Daten, die abgefragt werden sollen nicht sofort zur Verfügung stehen. (Bei einer Abfrage von
+    einem HTTP-Server zB. kann es passieren, dass der Server die Antwort noch nicht gesendet hat, aber die GUI
+    die (noch) leere Ergebnis-Variable bereits anzeigt) Das kann zu Fehlern führen.
+
+    Observable - beinhaltet das Objekt das beobachtet werden soll
+    Observer - ist der asynchrone Service, der das Observable beobachtet
+    Subscriber - ist der GUI-Teil, der sich bei einem Observer anmeldet, weil er ein "Abonnent" der Daten sein möchte.
+
+    Im einfachsten Beispiel kann zB. ein Observable ein Event wie zB "mousemoved" sein.
+    Der Observer beobachtet das observable. Und wenn es einen Subscriber gibt, wird an diesen bei Änderung des Observables
+    eine Nachricht geschickt (emit). Wenn der Observable ein MouseMoved Event ist, wird dieser Event dem Subscriber gesendet
+    sobald er auftritt. Aus dem Event kann dann die Mausposition ausgelesen werden und somit auch im Template angezeigt werden.
+
+    https://coursetro.com/posts/code/148/RxJS-Observables-Tutorial---Creating-&-Subscribing-to-Observables
+    https://angular.io/guide/observables
+    https://rxjs-dev.firebaseapp.com/
+    https://medium.com/@zmharker/rxjs-observables-in-ionic-and-angular-apps-a-beginners-guide-181643af675e
+    https://medium.com/@luukgruijs/understanding-creating-and-subscribing-to-observables-in-angular-426dbf0b04a3
+    https://angular.de/artikel/angular2-observables/
+
+    Eine spezielle Art stellt ein "Subject" dar. Es ist gleichzeitig ein Observer sowie ein Observable.
+    Somit kann man es als ein Event-Emitter gesehen werden, der gleich mehrere Subscriber bedienen kann.
+    Wenn man beispielsweise mehrere Komponenten hat, die gleichzeitig auf die Nachrichten eines Websocket-Servers hören sollen
+    ist ein "Subject" ideal. Gerade bei einem Websocket-Dienst trifft das nochmal im speziellen zu.
+    
+    https://blog.angulartraining.com/rxjs-subjects-a-tutorial-4dcce0e9637f
+  */
+
   //Das Subject ist vom Typ MessageEvent, welches mit dem WebSocket Interface & onMessage zu tun hat
-  //https://blog.angulartraining.com/rxjs-subjects-a-tutorial-4dcce0e9637f
   //https://developer.mozilla.org/de/docs/Web/API/MessageEvent
   private subject: Rx.Subject<MessageEvent>;
 
   //Diese Funktion ist von außen sichtbar. Es stellt nur den Zugriff auf die privaten Elemente
-  //der Klasse zur Verfügung. Der Rückgabewert ist vom Typ "Subject-MessageEvent" weil der Rückgabewert
-  //der Funktion in die Variable "Subject" von oben hineingeschrieben wird.
+  //der Klasse zur Verfügung.
   //Die Funktion "create(url)" ist die Private Funktion die die Verbindung zum Websocket-Server aufbaut und
-  //die Events des Websocket-Servers mit den Observable-Events verknüpft.
-  //Am Ende ist der Rückgabewert, die die aufrufende Komponente bekommt ein fertiger Observer
-  //den man dann subscriben kann.
+  //das "Subject" zusammenbaut, welches aus Observer & Observable besteht. Am Ende wird der aufrufenden Komponente
+  //das Subject als Rückgabewert geliefert. Diese kann dann über das Subject "subscriben" sowie Nachrichten emittieren.
+  //(Über websockets senden & empfangen)
   public connect(url): Rx.Subject<MessageEvent> {
     if (!this.subject) {
       this.subject = this.create(url);
@@ -32,8 +57,8 @@ export class WebsocketService {
     return this.subject;
   }
 
-  //Diese Funktion hat als Rückgabewert wiederum ein "Subject-MessageEvent", weil es so von der connect-Funktion
-  //benötigt wird.
+  //Diese Funktion generiert zuerst ein Observable und dann einen Observer. Am Ende werden beide im "Subject" kombiniert
+  //und an die Funktion "connect" zurückgegeben.
   private create(url): Rx.Subject<MessageEvent> {
     let ws = new WebSocket(url);  //Der WebSocket selbst wird angelegt
     
@@ -49,32 +74,17 @@ export class WebsocketService {
 
     //Deklariert die observer-Komponente für das "Subject" und sorgt dafür dass per next auch Daten emitted werden können.
     let observer = {
-      next: (data: Object) => {   //Funktion "Next" welches ein Datenobjekt in Form eines JSON-Objektes als Übergabewert nimmt.
+      next: (data: string) => {   //Funktion "Next" welches ein Datenobjekt in Form eines Strings als Übergabewert nimmt.
         if (ws.readyState === WebSocket.OPEN) {   //Wenn der Websocket verbunden ist
-          ws.send(JSON.stringify(data));    //konvertiere das JSON-Objekt in einen String, da Websockets nur Strings übertragen kann.
+          ws.send(data);    //sende den String über Websocket
+          console.log("Data sent");
         }
       }
     }
-    
+  
     //Baut schlussendlich das Subject aus observable und observer zusammen und "returned" es an die Connect-Funktion die es
     //wiederum an die Aufrufende KOmponente übergibt. Diese kann dann "subscriben" und damit auf neue Nachrichten lauschen
     //genauso wie per "Next" neue Nachrichten senden.
     return Rx.Subject.create(observer, observable);
   }
-
-
-  //public observable = fromEvent(document, 'mousemove')
-  /*
-  public observable = Observable.create((observer: any) => {
-    try {
-      observer.next('I am the Observable.')
-      observer.next('And who are you?')
-      observer.complete()
-      observer.next('Not sending this...')
-    }
-    catch (err) {
-      observer.error(err)
-    }
-  })
-  */
 }
