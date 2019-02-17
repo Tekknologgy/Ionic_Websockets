@@ -77,7 +77,7 @@ export class WebsocketService {
       next: (data: string) => {   //Funktion "Next" welches ein Datenobjekt in Form eines Strings als Übergabewert nimmt.
         if (ws.readyState === WebSocket.OPEN) {   //Wenn der Websocket verbunden ist
           ws.send(data);    //sende den String über Websocket
-          console.log("Data sent");
+          console.log(`WS sent: ${data}`);
         }
       }
     }

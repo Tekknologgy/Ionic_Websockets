@@ -1,0 +1,15 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>json</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content padding>
+  <ion-item>
+    <ion-label position="stacked">New Volume</ion-label>
+    <ion-input type="number" placeholder="0-100" [(ngModel)]="newVolume"></ion-input>
+  </ion-item>
+  <ion-item>
+    <ion-button (click)="setVolume()">Set Volume</ion-button>
+  </ion-item>
+</ion-content>
