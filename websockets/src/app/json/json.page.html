@@ -8,8 +8,12 @@
   <ion-item>
     <ion-label position="stacked">New Volume</ion-label>
     <ion-input type="number" placeholder="0-100" [(ngModel)]="newVolume"></ion-input>
+    <ion-button (click)="setVolume()">Set Volume</ion-button>
   </ion-item>
   <ion-item>
-    <ion-button (click)="setVolume()">Set Volume</ion-button>
+    <ion-button (click)="Play()">Play</ion-button>
+    <ion-button (click)="Pause(1)">Pause Ein</ion-button>
+    <ion-button (click)="Pause(0)">Pause Aus</ion-button>
+    <ion-button (click)="Stop()">Stop</ion-button>
   </ion-item>
 </ion-content>

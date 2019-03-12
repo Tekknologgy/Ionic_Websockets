@@ -29,7 +29,22 @@ export class JsonPage implements OnInit {
   }
 
   private setVolume() {
-    var data = JSON.stringify({"Component": "newVolume","newVolume": this.newVolume});
+    var data = JSON.stringify({"Component": "setVolume","newVolume": this.newVolume});
+    //console.log(`Sent: ${data}`);
+    this.mywebsocket.next(data);
+  }
+  private Play() {
+    var data = JSON.stringify({"Component": "Play"});
+    //console.log(`Sent: ${data}`);
+    this.mywebsocket.next(data);
+  }
+  private Pause(status) {
+    var data = JSON.stringify({"Component": "Pause","PauseStatus": status});
+    //console.log(`Sent: ${data}`);
+    this.mywebsocket.next(data);
+  }
+  private Stop() {
+    var data = JSON.stringify({"Component": "Stop"});
     //console.log(`Sent: ${data}`);
     this.mywebsocket.next(data);
   }
